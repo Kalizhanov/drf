@@ -1,5 +1,7 @@
 from dataclasses import fields
 from email.policy import default
+import numbers
+from statistics import quantiles
 from xml.etree.ElementInclude import include
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -45,7 +47,9 @@ class BasketItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BasketItem
-        fields = ("item",)
+        fields = ("item", "quantity")
+
+    
 
     
         
