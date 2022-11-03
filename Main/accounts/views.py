@@ -1,3 +1,4 @@
+from sys import api_version
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from knox.models import AuthToken
@@ -73,8 +74,18 @@ class ItemAPI(generics.ListAPIView):
     search_fields = ("name", "price")
     pagination_class = StandardResultsSetPagination
 
-    def get():
-        pass
+    
+class SingleItem(APIView):
+    serializer = ProductsSerializer()
+
+    def get(self, request):
+        name = request.query_params['name']
+        item = Item.objects.get(name=name)
+        item.viewed += 1
+        item.save()
+        serializer = ProductsSerializer(item)
+
+        return Response(serializer.data)
 
 
 class BestSelling(generics.ListAPIView):
