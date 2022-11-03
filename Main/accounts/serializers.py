@@ -1,8 +1,3 @@
-from dataclasses import fields
-from email.policy import default
-import numbers
-from statistics import quantiles
-from xml.etree.ElementInclude import include
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import *
@@ -33,8 +28,6 @@ class ProductsSerializer(serializers.ModelSerializer):
 
 class BasketSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    # products = ProductsSerializer(many=True, read_only=True)
-    # user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Basket

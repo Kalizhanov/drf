@@ -46,21 +46,6 @@ class BasketAPI(APIView):
         serializer.is_valid(raise_exception=True)
         basket, _ = Basket.objects.get_or_create(user=request.user)
 
-        '''
-        ********************************** This working code *********************
-
-        existed = BasketItem.objects.filter(basket=basket, item=serializer.validated_data['item'])
-
-        if existed:
-            existed = existed[0]
-            existed.quantity += serializer.validated_data['quantity']
-            existed.save()
-            return Response({"data": 'success'})
-        else:
-            serializer.save(basket=basket)
-            return Response({"data": serializer.data})
-        '''
-
         existed, obj = BasketItem.objects.update_or_create(
             basket=basket, 
             item=serializer.validated_data['item'],
@@ -76,29 +61,6 @@ class BasketAPI(APIView):
         return Response(serializer.data)
 
 
-''' 
-Searching by "POST" method
-
-class ItemAPI(APIView):
-    serializer = SearchSerializer()
-
-    def get(self, request):
-        item = Item.objects.all()
-        serializer = ProductsSerializer(item, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = SearchSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        item = Item.objects.filter(name=serializer.data['item_name'])
-        item_api = ProductsSerializer(item, many=True)
-
-        if item:
-            return Response(item_api.data)
-        else:
-            return Response('There is no such product')
-'''
-
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 2
         
@@ -111,6 +73,19 @@ class ItemAPI(generics.ListAPIView):
     search_fields = ("name", "price")
     pagination_class = StandardResultsSetPagination
 
+    def get():
+        pass
+
+
+class BestSelling(generics.ListAPIView):
+    serializer_class = ProductsSerializer
+    queryset = Item.objects.order_by('-sold')[:3]
+
+
+class Popular(generics.ListAPIView):
+    serializer_class = ProductsSerializer
+    queryset = Item.objects.order_by('-viewed')
+
 
 class Purchase(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -122,6 +97,7 @@ class Purchase(APIView):
         for i in basket:
             item = Item.objects.get(name=i.item)
             item.number -= i.quantity
+            item.sold += i.quantity
             item.save()
 
         basket.delete()
