@@ -1,8 +1,7 @@
-from sys import api_version
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from knox.models import AuthToken
-from .serializers import UserSerializer, RegisterSerializer, BasketItemSerializer, ProductsSerializer
+from .serializers import *
 from django.contrib.auth import login
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from knox.views import LoginView as KnoxLoginView
@@ -11,6 +10,7 @@ from .models import Basket, BasketItem, Item
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
+from django.db import transaction
 
 
 # Register API
@@ -78,11 +78,12 @@ class ItemAPI(generics.ListAPIView):
 class SingleItem(APIView):
     serializer = ProductsSerializer()
 
-    def get(self, request):
-        name = request.query_params['name']
-        item = Item.objects.get(name=name)
+    
+    def get(self, request, pk):
+        item = Item.objects.get(id=pk)
         item.viewed += 1
         item.save()
+
         serializer = ProductsSerializer(item)
 
         return Response(serializer.data)
@@ -101,6 +102,7 @@ class Popular(generics.ListAPIView):
 class Purchase(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
+    @transaction.atomic
     def post(self, request):
         cart, _ = Basket.objects.get_or_create(user=request.user)
         basket = BasketItem.objects.filter(basket=cart)
@@ -111,7 +113,11 @@ class Purchase(APIView):
             item.sold += i.quantity
             item.save()
 
-        basket.delete()
+        try:    
+            basket.delete()
+        except:
+            print('Error!')
+
         return Response('You bought, thanks!!!')
 
 
