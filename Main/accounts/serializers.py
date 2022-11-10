@@ -21,10 +21,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(required=False)
-    price = serializers.DecimalField(required=False, max_digits=9, decimal_places=2)
-    description = serializers.CharField(required=False)
-
     class Meta:
         model = Item
         fields = ("__all__")

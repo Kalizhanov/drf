@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from .permissions import IsAdminOrReadOnly
 
 
 # Register API
@@ -65,17 +65,7 @@ class BasketAPI(APIView):
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 2
-
-
-class IsAdminOrReadOnly(BasePermission):                     #My Permission Class 
-    def has_permission(self, request, view):
-        return bool(
-            request.method in SAFE_METHODS or
-            request.user and
-            request.user.is_authenticated and
-            request.user.is_staff,
-        )
-        
+  
 
 class ItemAPI(generics.ListAPIView):
     permission_classes = (IsAdminOrReadOnly,)
@@ -107,10 +97,10 @@ class SingleItem(APIView):
 
         return Response(serializer.data)
 
-    def put(self, request, pk):
+    def patch(self, request, pk):
         item = Item.objects.get(id=pk)
 
-        serializer = ItemSerializer(data=request.data, instance=item)
+        serializer = ItemSerializer(data=request.data, instance=item, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
