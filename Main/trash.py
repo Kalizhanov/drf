@@ -38,3 +38,43 @@ class ItemAPI(APIView):
 
 # user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 # products = ProductsSerializer(many=True, read_only=True)
+
+
+# user = User.objects.get(username="galymzhan")
+# content_type = ContentType.objects.get_for_model(Item)
+# permission = Permission.objects.get(
+#     codename="view_item",
+#     content_type=content_type
+# )
+
+# user.user_permissions.add(permission)
+# user.user_permissions.remove(permission)
+
+
+# class AdminPanel(APIView):
+#     permission_classes = (permissions.IsAdminUser,)
+#     serializer = ProductsSerializer()
+
+#     @transaction.atomic
+#     def post(self, request):
+#         serializer = ProductsSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+        
+#         existed, obj = Item.objects.update_or_create(
+#             name = serializer.data['name'],
+#             defaults=(
+        
+
+dict = {
+    'name': 'SomeName',
+    'surname': 'SomeSurname'
+}
+
+dict2 = {
+    "name": 'AnotherName',
+    'surname': "AnotherSurname"
+}
+
+for i, j in dict.items():
+    print(dict2[i])
+

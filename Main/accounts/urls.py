@@ -1,4 +1,4 @@
-from .views import BasketAPI, ItemAPI, LoginAPI, RegisterAPI, Purchase, BestSelling, Popular, SingleItem
+from .views import *
 from django.urls import path
 from knox import views as knox_views
 from .yasg import urlpatterns as doc_urls

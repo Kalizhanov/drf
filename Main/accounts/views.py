@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 # Register API
@@ -64,38 +65,65 @@ class BasketAPI(APIView):
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 2
+
+
+class IsAdminOrReadOnly(BasePermission):                     #My Permission Class 
+    def has_permission(self, request, view):
+        return bool(
+            request.method in SAFE_METHODS or
+            request.user and
+            request.user.is_authenticated and
+            request.user.is_staff,
+        )
         
 
 class ItemAPI(generics.ListAPIView):
-    serializer_class = ProductsSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    serializer_class = ItemSerializer
     queryset = Item.objects.all()
     filter_backends = (DjangoFilterBackend, SearchFilter)
     filterset_fields = ["category"]
     search_fields = ("name", "price")
     pagination_class = StandardResultsSetPagination
 
-    
-class SingleItem(APIView):
-    serializer = ProductsSerializer()
+    def post(self, request):
+        serializer = ItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
 
     
+class SingleItem(APIView):
+    serializer = ItemSerializer()
+    permission_classes = (IsAdminOrReadOnly,)
+
     def get(self, request, pk):
         item = Item.objects.get(id=pk)
         item.viewed += 1
         item.save()
 
-        serializer = ProductsSerializer(item)
+        serializer = ItemSerializer(item)
+
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        item = Item.objects.get(id=pk)
+
+        serializer = ItemSerializer(data=request.data, instance=item)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response(serializer.data)
 
 
 class BestSelling(generics.ListAPIView):
-    serializer_class = ProductsSerializer
+    serializer_class = ItemSerializer
     queryset = Item.objects.order_by('-sold')[:3]
 
 
 class Popular(generics.ListAPIView):
-    serializer_class = ProductsSerializer
+    serializer_class = ItemSerializer
     queryset = Item.objects.order_by('-viewed')
 
 
@@ -109,6 +137,10 @@ class Purchase(APIView):
         
         for i in basket:
             item = Item.objects.get(name=i.item)
+
+            if i.quantity > item.number:
+                raise Exception("We don't have such number of this product")
+
             item.number -= i.quantity
             item.sold += i.quantity
             item.save()
@@ -119,8 +151,3 @@ class Purchase(APIView):
             print('Error!')
 
         return Response('You bought, thanks!!!')
-
-
-
-
-
